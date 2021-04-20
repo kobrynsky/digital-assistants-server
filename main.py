@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 import os
 import time
-from flask import Flask, abort, request, jsonify, g, url_for
+from flask import Flask, abort, request, jsonify, g, url_for, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_httpauth import HTTPBasicAuth
+from flask_cors import CORS, cross_origin
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # initialization
 app = Flask(__name__)
+cors = CORS(app)
+# app.run(host="0.0.0.0", port=5000)
 app.config['SECRET_KEY'] = 'the quick brown fox jumps over the lazy dog'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
@@ -62,10 +65,11 @@ def verify_password(username_or_token, password):
 def new_user():
     username = request.json.get('username')
     password = request.json.get('password')
+
     if username is None or password is None:
-        abort(400)    # missing arguments
+        return Response("Username or password is empty", status=400, mimetype='application/json')
     if User.query.filter_by(username=username).first() is not None:
-        abort(400)    # existing user
+        return Response("User with with username already exists", status=400, mimetype='application/json')
     user = User(username=username)
     user.hash_password(password)
     db.session.add(user)
@@ -98,4 +102,5 @@ def get_resource():
 if __name__ == '__main__':
     if not os.path.exists('db.sqlite'):
         db.create_all()
+    # app.run(ssl_context='adhoc')
     app.run(debug=True)
