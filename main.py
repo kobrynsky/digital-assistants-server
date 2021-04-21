@@ -8,6 +8,8 @@ from flask_cors import CORS, cross_origin
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 
+UPLOAD_FOLDER = 'files'
+
 # initialization
 app = Flask(__name__)
 cors = CORS(app)
@@ -15,6 +17,7 @@ cors = CORS(app)
 app.config['SECRET_KEY'] = 'the quick brown fox jumps over the lazy dog'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # extensions
 db = SQLAlchemy(app)
@@ -97,6 +100,15 @@ def get_auth_token():
 @auth.login_required
 def get_resource():
     return jsonify({'data': 'Hello, %s!' % g.user.username})
+
+@app.route('/api/shrooms/check', methods=['POST'])
+def check_shroom():
+    print(request.files)
+    if 'shroom' in request.files:
+        file = request.files['shroom']
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
+        return Response("Added file", status=200, mimetype='application/json')
+    return Response("Provide file!", status=400, mimetype='application/json')
 
 
 if __name__ == '__main__':
