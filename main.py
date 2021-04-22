@@ -7,7 +7,7 @@ from flask_httpauth import HTTPBasicAuth
 from flask_cors import CORS, cross_origin
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from shrooms_ai import predict
 UPLOAD_FOLDER = 'files'
 
 # initialization
@@ -106,8 +106,10 @@ def check_shroom():
     print(request.files)
     if 'shroom' in request.files:
         file = request.files['shroom']
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
-        return Response("Added file", status=200, mimetype='application/json')
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename) 
+        file.save(filepath)
+        predicted_class, percentage_probability = predict(filepath)
+        return jsonify({'predicted_class': predicted_class, "percentage_probability": str(percentage_probability)})
     return Response("Provide file!", status=400, mimetype='application/json')
 
 
